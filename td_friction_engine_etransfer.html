@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TD Friction Engine — E-Transfer UX</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg1:#ffffff;--bg2:#f5f4f0;--bg3:#eeece6;
+  --bg-info:#e6f1fb;--bg-warn:#faeeda;--bg-danger:#fcebeb;--bg-success:#e1f5ee;
+  --t1:#1a1a18;--t2:#5f5e5a;--t3:#888780;
+  --ti:#0c447c;--tw:#633806;--td:#791F1F;--ts:#085041;
+  --b1:rgba(26,26,24,0.12);--b2:rgba(26,26,24,0.22);
+  --bi:rgba(24,95,165,0.3);--bw:rgba(239,159,39,0.4);--bd:rgba(226,75,74,0.4);--bs:rgba(29,158,117,0.4);
+  --r-md:8px;--r-lg:12px;
+  --font:system-ui,-apple-system,sans-serif;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg1:#1e1e1c;--bg2:#2a2a27;--bg3:#232320;
+    --bg-info:#0c2a45;--bg-warn:#2e200a;--bg-danger:#2a0e0e;--bg-success:#042e1a;
+    --t1:#e8e6df;--t2:#9c9a92;--t3:#6b6a64;
+    --ti:#85b7eb;--tw:#fac775;--td:#f09595;--ts:#9fe1cb;
+    --b1:rgba(232,230,223,0.10);--b2:rgba(232,230,223,0.20);
+    --bi:rgba(133,183,235,0.25);--bw:rgba(250,199,117,0.3);--bd:rgba(240,149,149,0.3);--bs:rgba(159,225,203,0.25);
+  }
+}
+
+body{
+  background:var(--bg2);
+  font-family:var(--font);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:32px 16px 48px;
+  min-height:100vh;
+}
+
+h1{font-size:17px;font-weight:500;color:var(--t1);margin-bottom:4px;text-align:center}
+.subtitle{font-size:13px;color:var(--t2);margin-bottom:20px;text-align:center;line-height:1.5}
+
+/* Slider control */
+.slider-panel{
+  width:100%;max-width:400px;
+  background:var(--bg2);border-radius:var(--r-lg);border:0.5px solid var(--b2);
+  padding:14px 16px;margin-bottom:16px;
+  display:flex;align-items:center;gap:12px;
+}
+.slider-panel input{flex:1}
+.amount-badge{text-align:right;min-width:80px}
+.amount-badge .amt{font-size:20px;font-weight:500;color:var(--t1)}
+.risk-pill{display:inline-block;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;margin-top:4px}
+
+/* Device shell */
+.device{
+  background:var(--bg2);border-radius:22px;
+  padding:12px;width:100%;max-width:360px;
+  border:0.5px solid var(--b2);
+}
+.status-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 6px 10px;font-size:11px;color:var(--t3);
+}
+.screen{display:none;background:var(--bg1);border-radius:14px;overflow:hidden;border:0.5px solid var(--b1)}
+.screen.on{display:block}
+
+/* Nav */
+.nav-bar{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:0.5px solid var(--b1)}
+.back-btn{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--bg2);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.nav-title{font-size:15px;font-weight:500;color:var(--t1)}
+.nav-sub{font-size:11px;color:var(--t2);margin-top:1px}
+
+/* Body */
+.body{padding:16px}
+
+/* Step dots */
+.step-dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--b2)}
+.dot.on{background:#185FA5;width:18px;border-radius:3px}
+.dot.done{background:#1D9E75}
+
+/* Fields */
+.field-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.field-block{font-size:15px;font-weight:500;color:var(--t1);padding:11px 13px;background:var(--bg2);border-radius:var(--r-md);border:0.5px solid var(--b1);margin-bottom:12px}
+.amount-hero{font-size:38px;font-weight:500;color:var(--t1);text-align:center;padding:18px 0 6px}
+.amount-hero-sub{font-size:12px;color:var(--t2);text-align:center;margin-bottom:18px}
+
+/* To-row */
+.to-row{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg2);border-radius:var(--r-md);border:0.5px solid var(--b1);margin-bottom:12px}
+.av{width:36px;height:36px;border-radius:50%;background:#EEEDFE;color:#3C3489;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0}
+
+/* Risk strips */
+.risk-strip{border-radius:var(--r-md);padding:10px 13px;font-size:12px;line-height:1.5;display:flex;gap:8px;align-items:flex-start;margin-bottom:12px}
+.rs-blue{background:var(--bg-info);border:0.5px solid var(--bi);color:var(--ti)}
+.rs-amber{background:var(--bg-warn);border:0.5px solid var(--bw);color:var(--tw)}
+.rs-red{background:var(--bg-danger);border:0.5px solid var(--bd);color:var(--td)}
+
+/* Signals */
+.sig-box{background:var(--bg2);border-radius:var(--r-lg);border:0.5px solid var(--b1);padding:4px 13px;margin-bottom:14px}
+.sig-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--b1);font-size:12px;color:var(--t1)}
+.sig-row:last-child{border-bottom:none}
+.sig-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* Checkboxes */
+.chk-row{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:var(--bg2);border-radius:var(--r-md);border:0.5px solid var(--b1);margin-bottom:7px;cursor:pointer;transition:background .12s;user-select:none}
+.chk-row:hover{background:var(--bg3)}
+.chk-box{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--b2);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.chk-box.on{background:#1D9E75;border-color:#1D9E75}
+.chk-text{font-size:12px;color:var(--t1);line-height:1.5}
+
+/* Timer ring */
+.timer-wrap{display:flex;flex-direction:column;align-items:center;padding:14px 0 8px}
+
+/* Held card */
+.held-card{background:var(--bg2);border-radius:var(--r-lg);border:0.5px solid var(--b1);padding:13px;margin-bottom:10px}
+.held-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--t2);padding:4px 0}
+.held-val{font-size:13px;font-weight:500;color:var(--t1)}
+
+/* Success */
+.success-icon{width:64px;height:64px;border-radius:50%;background:var(--bg-success);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.success-body-card{background:var(--bg2);border-radius:var(--r-lg);border:0.5px solid var(--b1);padding:13px;text-align:left;margin-bottom:16px}
+
+/* Buttons */
+.btn{width:100%;padding:13px;border-radius:var(--r-md);font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:var(--font);transition:opacity .15s;margin-top:6px}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-blue{background:#185FA5;color:#fff}
+.btn-green{background:#1D9E75;color:#fff}
+.btn-red{background:#E24B4A;color:#fff}
+.btn-info{background:var(--bg-info);color:var(--ti)}
+.btn-ghost{background:transparent;border:0.5px solid var(--b2);color:var(--t2);padding:11px}
+.btn-ghost-danger{background:transparent;border:0.5px solid var(--bd);color:var(--td);padding:11px}
+.section-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 7px}
+
+/* tag pill */
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px}
+</style>
+</head>
+<body>
+
+<h1>TD Friction Engine</h1>
+<p class="subtitle">Interactive e-transfer prototype. Adjust risk level, then tap through each screen.</p>
+
+<!-- Amount slider -->
+<div class="slider-panel">
+  <div style="flex:1">
+    <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Transfer amount</div>
+    <input type="range" min="500" max="9500" step="500" value="3500" id="amt-slider" oninput="setAmount(this.value)" style="width:100%">
+  </div>
+  <div class="amount-badge">
+    <div class="amt" id="amt-display">$3,500</div>
+    <div id="risk-pill" class="risk-pill">Medium risk</div>
+  </div>
+</div>
+
+<!-- Phone -->
+<div class="device">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span style="display:flex;gap:5px;align-items:center">
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="3" width="2" height="7" rx="1" fill="currentColor"/><rect x="3" y="2" width="2" height="8" rx="1" fill="currentColor"/><rect x="6" y="1" width="2" height="9" rx="1" fill="currentColor"/><rect x="9" y="0" width="2" height="10" rx="1" fill="currentColor"/><rect x="12" y="0" width="2" height="10" rx="1" fill="currentColor" opacity=".3"/></svg>
+      <svg width="16" height="10" viewBox="0 0 16 10" fill="none"><rect x="0" y="1" width="13" height="8" rx="1.5" stroke="currentColor" stroke-width="1"/><rect x="1.5" y="2.5" width="8" height="5" rx=".5" fill="currentColor"/><rect x="14" y="3.5" width="1.5" height="3" rx=".75" fill="currentColor"/></svg>
+    </span>
+  </div>
+
+  <!-- S1: Transfer form -->
+  <div class="screen on" id="s1">
+    <div class="nav-bar">
+      <button class="back-btn" onclick="go(0)"><svg width="8" height="13" viewBox="0 0 8 13" fill="none"><path d="M7 1L1 6.5L7 12" stroke="var(--t2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div><div class="nav-title">Send money</div></div>
+    </div>
+    <div class="body">
+      <div class="step-dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div class="field-label">To</div>
+      <div class="to-row">
+        <div class="av">MK</div>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--t1)">Michael K.</div>
+          <div style="font-size:11px;color:var(--t2)">mike.k92@gmail.com · first transfer</div>
+        </div>
+        <div style="margin-left:auto"><span class="tag" style="background:#FAEEDA;color:#633806">New contact</span></div>
+      </div>
+      <div class="field-label">Amount</div>
+      <div class="amount-hero" id="s1-amount">$3,500</div>
+      <div class="amount-hero-sub">Available: $6,240 · Chequing ****4821</div>
+      <div class="field-label">Message (optional)</div>
+      <div class="field-block" style="color:var(--t3);font-weight:400">Add a note...</div>
+      <button class="btn btn-blue" onclick="go(2)">Review transfer →</button>
+      <button class="btn btn-ghost" onclick="go(0)" style="margin-top:8px">Cancel</button>
+    </div>
+  </div>
+
+  <!-- S2: Risk review / friction -->
+  <div class="screen" id="s2">
+    <div class="nav-bar">
+      <button class="back-btn" onclick="go(1)"><svg width="8" height="13" viewBox="0 0 8 13" fill="none"><path d="M7 1L1 6.5L7 12" stroke="var(--t2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div><div class="nav-title">Before you send</div><div class="nav-sub" id="s2-sub">A moment to review</div></div>
+    </div>
+    <div class="body">
+      <div class="step-dots"><div class="dot done"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
+      <div id="s2-strip"></div>
+      <div class="section-label">Why we're pausing</div>
+      <div class="sig-box" id="s2-signals"></div>
+      <div class="section-label">Confirm before continuing</div>
+      <div id="s2-checks"></div>
+      <button class="btn" id="s2-cont-btn" onclick="go(3)" disabled style="background:var(--bg2);color:var(--t2);margin-top:10px">I've reviewed — continue</button>
+      <button class="btn btn-ghost-danger" onclick="go(0)" style="margin-top:8px">Cancel this transfer</button>
+    </div>
+  </div>
+
+  <!-- S3: Hold / cooling off -->
+  <div class="screen" id="s3">
+    <div class="nav-bar">
+      <div><div class="nav-title" id="s3-title">Transfer held for 30 min</div></div>
+    </div>
+    <div class="body">
+      <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot on"></div><div class="dot"></div></div>
+      <div class="timer-wrap">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="var(--b1)" stroke-width="7"/>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#185FA5" stroke-width="7"
+            stroke-dasharray="264" stroke-dashoffset="0" stroke-linecap="round"
+            transform="rotate(-90 50 50)" id="s3-arc"/>
+          <text x="50" y="46" text-anchor="middle" font-size="13" font-weight="500"
+            fill="var(--t1)" font-family="system-ui,sans-serif" id="s3-timer">30:00</text>
+          <text x="50" y="62" text-anchor="middle" font-size="10"
+            fill="var(--t2)" font-family="system-ui,sans-serif">remaining</text>
+        </svg>
+        <div style="font-size:12px;color:var(--t2);text-align:center;margin-top:8px;line-height:1.55;max-width:240px" id="s3-msg">Your transfer is queued. We'll send it automatically when the hold ends — unless you cancel.</div>
+      </div>
+      <div class="held-card">
+        <div class="held-row"><span>To</span><span class="held-val">Michael K.</span></div>
+        <div class="held-row"><span>Amount</span><span class="held-val" id="s3-amount">$3,500</span></div>
+        <div class="held-row"><span>Sends at</span><span class="held-val" id="s3-time">10:11 AM</span></div>
+        <div class="held-row"><span>Status</span><span class="tag" id="s3-status" style="background:#E1F5EE;color:#085041">Cooling off</span></div>
+      </div>
+      <div id="s3-extra"></div>
+      <button class="btn btn-blue" onclick="go(4)">Send now anyway</button>
+      <button class="btn btn-ghost-danger" onclick="go(0)" style="margin-top:8px">Cancel transfer</button>
+    </div>
+  </div>
+
+  <!-- S4: Override confirmation -->
+  <div class="screen" id="s4">
+    <div class="nav-bar">
+      <button class="back-btn" onclick="go(3)"><svg width="8" height="13" viewBox="0 0 8 13" fill="none"><path d="M7 1L1 6.5L7 12" stroke="var(--t2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div><div class="nav-title">Send immediately</div></div>
+    </div>
+    <div class="body">
+      <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot on"></div></div>
+      <div id="s4-warn"></div>
+      <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:16px">
+        E-transfers are typically <strong style="color:var(--t1)">instant and irreversible</strong> once accepted. TD cannot recover funds sent to the wrong person or in response to fraud.
+      </div>
+      <div id="s4-checks"></div>
+      <button class="btn btn-red" id="s4-send-btn" disabled onclick="go(5)" style="margin-top:10px">
+        Confirm — send <span id="s4-amount-label">$3,500</span> now
+      </button>
+      <button class="btn btn-ghost" onclick="go(3)" style="margin-top:8px">Keep the hold</button>
+    </div>
+  </div>
+
+  <!-- S5: Success -->
+  <div class="screen" id="s5">
+    <div class="body" style="padding-top:28px;text-align:center">
+      <div class="success-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14l5.5 5.5L22 8" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div style="font-size:22px;font-weight:500;color:var(--t1);margin-bottom:4px" id="s5-amount">$3,500</div>
+      <div style="font-size:14px;color:var(--t2);margin-bottom:4px" id="s5-label">Transfer queued</div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:24px" id="s5-sub">Sends at 10:11 AM unless cancelled</div>
+      <div class="success-body-card">
+        <div class="held-row"><span>To</span><span class="held-val">Michael K.</span></div>
+        <div class="held-row"><span>From</span><span class="held-val">Chequing ****4821</span></div>
+        <div class="held-row"><span>Reference</span><span class="held-val" style="color:var(--t3)">TDE-9847-22</span></div>
+      </div>
+      <button class="btn btn-info" onclick="go(0)">Done</button>
+      <button class="btn btn-ghost-danger" onclick="go(0)" style="margin-top:10px">Cancel this transfer</button>
+    </div>
+  </div>
+
+  <!-- S0: Reset -->
+  <div class="screen" id="s0">
+    <div class="body" style="padding:40px 16px;text-align:center">
+      <div style="font-size:14px;font-weight:500;color:var(--t1);margin-bottom:6px">Transfer cancelled</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:20px;line-height:1.5">No money was moved. Adjust the amount above and start a new transfer.</div>
+      <button class="btn btn-info" onclick="go(1)">Start a new transfer</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var amount = 3500;
+var s2Checks = [];
+var s4Checks = [];
+
+function fmt(n){ return '$' + parseInt(n).toLocaleString('en-CA'); }
+
+function risk(a){
+  a = parseInt(a);
+  if(a < 2000) return 'low';
+  if(a < 5000) return 'medium';
+  if(a < 8000) return 'high';
+  return 'critical';
+}
+
+function setAmount(v){
+  amount = parseInt(v);
+  var d = fmt(amount);
+  document.getElementById('amt-display').textContent = d;
+  document.getElementById('s1-amount').textContent = d;
+  var r = risk(amount);
+  var pill = document.getElementById('risk-pill');
+  var map = {
+    low:      {label:'Low risk',      bg:'#E1F5EE', color:'#085041'},
+    medium:   {label:'Medium risk',   bg:'#FAEEDA', color:'#633806'},
+    high:     {label:'High risk',     bg:'#FCEBEB', color:'#A32D2D'},
+    critical: {label:'Critical risk', bg:'#FCEBEB', color:'#791F1F'}
+  };
+  pill.textContent = map[r].label;
+  pill.style.background = map[r].bg;
+  pill.style.color = map[r].color;
+}
+
+function go(n){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); });
+  document.getElementById('s'+n).classList.add('on');
+  if(n===2) buildS2();
+  if(n===3) buildS3();
+  if(n===4) buildS4();
+  if(n===5) buildS5();
+}
+
+/* ── Screen 2 ── */
+function buildS2(){
+  var r = risk(amount);
+  var strips = {
+    low:     {cls:'rs-blue',  svg:'<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#185FA5" stroke-width="1.2"/><path d="M6.5 4v3m0 2v.5" stroke="#185FA5" stroke-width="1.2" stroke-linecap="round"/></svg>', text:"This transfer looks routine. We're showing you a quick summary before it sends."},
+    medium:  {cls:'rs-amber', svg:'<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L1 11.5h11L6.5 1zm0 3v3m0 2.3v.5" stroke="#854F0B" stroke-width="1.2" stroke-linecap="round"/></svg>', text:"A few signals suggest this transfer might benefit from a short review. This is not a block — just a pause."},
+    high:    {cls:'rs-red',   svg:'<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L1 11.5h11L6.5 1zm0 3v3m0 2.3v.5" stroke="#A32D2D" stroke-width="1.2" stroke-linecap="round"/></svg>', text:"Several unusual signals on this transfer. Please take a moment — fraudsters often create urgency to send quickly."},
+    critical:{cls:'rs-red',   svg:'<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L1 11.5h11L6.5 1zm0 3v3m0 2.3v.5" stroke="#A32D2D" stroke-width="1.2" stroke-linecap="round"/></svg>', text:"This transfer has multiple high-risk signals. If anyone has asked you to send this money urgently, call TD at 1-866-222-3456 before continuing."}
+  };
+  var s = strips[r];
+  document.getElementById('s2-strip').innerHTML = '<div class="risk-strip '+s.cls+'">'+s.svg+'<span style="flex:1">'+s.text+'</span></div>';
+  document.getElementById('s2-sub').textContent = r==='critical'?'High-risk transfer detected':r==='high'?'Multiple signals flagged':'A moment to review';
+
+  var allSigs = [
+    {dot:'#E24B4A', text:'First-ever transfer to this recipient'},
+    {dot:'#EF9F27', text:'Amount is 56% of your monthly average'},
+    {dot:'#EF9F27', text:'Transfer initiated within 4 min of app open'},
+    {dot:'#E24B4A', text:'Recipient email registered less than 30 days ago'},
+    {dot:'#E24B4A', text:'Amount just under daily limit ($10,000)'}
+  ];
+  var count = {low:1,medium:2,high:3,critical:5}[r];
+  var sigHtml = '';
+  for(var i=0;i<count;i++){
+    sigHtml += '<div class="sig-row"><div class="sig-dot" style="background:'+allSigs[i].dot+'"></div><span>'+allSigs[i].text+'</span></div>';
+  }
+  document.getElementById('s2-signals').innerHTML = sigHtml;
+
+  var allChecks = [
+    'I personally know Michael K. and intended to send this transfer.',
+    'I have not been contacted by anyone claiming to be from TD, CRA, or law enforcement asking me to move money.',
+    'I understand e-transfers are irreversible once the recipient accepts.',
+    'I am not under pressure or urgency to send this transfer right now.',
+    'I have verified the recipient email address with the recipient directly.'
+  ];
+  var ccount = {low:1,medium:2,high:3,critical:5}[r];
+  s2Checks = new Array(ccount).fill(false);
+  var cHtml = '';
+  for(var j=0;j<ccount;j++){
+    cHtml += '<div class="chk-row" onclick="toggleS2('+j+')"><div class="chk-box" id="s2c'+j+'"></div><div class="chk-text">'+allChecks[j]+'</div></div>';
+  }
+  document.getElementById('s2-checks').innerHTML = cHtml;
+  refreshS2Btn();
+}
+
+function toggleS2(i){
+  s2Checks[i] = !s2Checks[i];
+  var box = document.getElementById('s2c'+i);
+  if(s2Checks[i]){ box.classList.add('on'); box.innerHTML = checkSvg(); }
+  else { box.classList.remove('on'); box.innerHTML=''; }
+  refreshS2Btn();
+}
+
+function refreshS2Btn(){
+  var all = s2Checks.length && s2Checks.every(function(c){return c;});
+  var btn = document.getElementById('s2-cont-btn');
+  btn.disabled = !all;
+  btn.style.background = all ? '#185FA5' : 'var(--bg2)';
+  btn.style.color = all ? '#fff' : 'var(--t2)';
+}
+
+/* ── Screen 3 ── */
+function buildS3(){
+  var r = risk(amount);
+  var holdMins = {low:0, medium:30, high:60, critical:180}[r];
+  var now = new Date();
+  now.setMinutes(now.getMinutes() + holdMins);
+  var h = now.getHours(), m = now.getMinutes(), ap = h>=12?'PM':'AM';
+  h = h%12||12;
+  document.getElementById('s3-time').textContent = h+':'+(m<10?'0':'')+m+' '+ap;
+  document.getElementById('s3-amount').textContent = fmt(amount);
+  document.getElementById('s3-title').textContent = holdMins===0 ? 'Ready to send' : 'Transfer held for '+holdMins+' min';
+  document.getElementById('s3-timer').textContent = holdMins===0 ? 'Now' : (holdMins+':00');
+
+  var arcColors = {low:'#1D9E75', medium:'#185FA5', high:'#EF9F27', critical:'#E24B4A'};
+  var arc = document.getElementById('s3-arc');
+  arc.setAttribute('stroke', arcColors[r]);
+  arc.setAttribute('stroke-dashoffset', holdMins===0?'264':'0');
+
+  document.getElementById('s3-status').textContent = holdMins===0?'Sending now':'Cooling off';
+  document.getElementById('s3-msg').textContent = holdMins===0
+    ? 'No hold applied. Your transfer will send immediately upon final confirmation.'
+    : "Your transfer is queued. We'll send it automatically when the hold ends — unless you cancel.";
+
+  document.getElementById('s3-extra').innerHTML = r==='critical'
+    ? '<div class="risk-strip rs-red" style="margin-bottom:10px"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0"><path d="M6.5 1L1 11.5h11L6.5 1zm0 3v3m0 2.3v.5" stroke="#A32D2D" stroke-width="1.2" stroke-linecap="round"/></svg><span>If you\'re being pressured, call TD at <strong>1-866-222-3456</strong> before proceeding.</span></div>'
+    : '';
+}
+
+/* ── Screen 4 ── */
+function buildS4(){
+  var r = risk(amount);
+  document.getElementById('s4-amount-label').textContent = fmt(amount).replace('$','') ? fmt(amount) : fmt(amount);
+
+  var warnHtml = {
+    low:'',
+    medium:'<div class="risk-strip rs-amber" style="margin-bottom:14px"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0"><path d="M6.5 1L1 11.5h11L6.5 1zm0 3v3m0 2.3v.5" stroke="#854F0B" stroke-width="1.2" stroke-linecap="round"/></svg><span>Skipping the hold removes your window to cancel if something feels wrong.</span></div>',
+    high:'<div class="risk-strip rs-red" style="margin-bottom:14px"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0"><path d="M6.5 1L1 11.5h11L6.5 1zm0 3v3m0 2.3v.5" stroke="#A32D2D" stroke-width="1.2" stroke-linecap="round"/></svg><span>This is flagged as high-risk. Sending immediately is possible, but please be certain this is your own decision.</span></div>',
+    critical:'<div class="risk-strip rs-red" style="margin-bottom:14px"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0"><path d="M6.5 1L1 11.5h11L6.5 1zm0 3v3m0 2.3v.5" stroke="#A32D2D" stroke-width="1.2" stroke-linecap="round"/></svg><span><strong>Critical risk.</strong> If anyone has spoken to you about this transfer, call TD at 1-866-222-3456 before sending.</span></div>'
+  };
+  document.getElementById('s4-warn').innerHTML = warnHtml[r]||'';
+
+  var checkLabels = [
+    'I am sending this to someone I trust and have independently verified.',
+    'No one has asked me to send this urgently or has coached me through this transfer.'
+  ];
+  s4Checks = [false, false];
+  var cHtml = '';
+  for(var i=0;i<checkLabels.length;i++){
+    cHtml += '<div class="chk-row" onclick="toggleS4('+i+')"><div class="chk-box" id="s4c'+i+'"></div><div class="chk-text">'+checkLabels[i]+'</div></div>';
+  }
+  document.getElementById('s4-checks').innerHTML = cHtml;
+  refreshS4Btn();
+}
+
+function toggleS4(i){
+  s4Checks[i] = !s4Checks[i];
+  var box = document.getElementById('s4c'+i);
+  if(s4Checks[i]){ box.classList.add('on'); box.innerHTML = checkSvg(); }
+  else { box.classList.remove('on'); box.innerHTML=''; }
+  refreshS4Btn();
+}
+
+function refreshS4Btn(){
+  var all = s4Checks.every(function(c){return c;});
+  var btn = document.getElementById('s4-send-btn');
+  btn.disabled = !all;
+  btn.style.opacity = all ? '1' : '0.4';
+}
+
+/* ── Screen 5 ── */
+function buildS5(){
+  var r = risk(amount);
+  var holdMins = {low:0, medium:30, high:60, critical:180}[r];
+  document.getElementById('s5-amount').textContent = fmt(amount);
+  if(holdMins === 0){
+    document.getElementById('s5-label').textContent = 'Transfer sent';
+    document.getElementById('s5-sub').textContent = 'Michael K. will be notified to accept.';
+  } else {
+    var now = new Date(); now.setMinutes(now.getMinutes()+holdMins);
+    var h=now.getHours(),m=now.getMinutes(),ap=h>=12?'PM':'AM'; h=h%12||12;
+    document.getElementById('s5-label').textContent = 'Transfer queued';
+    document.getElementById('s5-sub').textContent = 'Sends at '+h+':'+(m<10?'0':'')+m+' '+ap+' unless cancelled';
+  }
+}
+
+function checkSvg(){
+  return '<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
+setAmount(3500);
+</script>
+</body>
+</html>

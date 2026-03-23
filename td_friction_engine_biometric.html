@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TD Friction Engine — Biometric Layer</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg1: #ffffff;
+  --bg2: #f5f4f0;
+  --bg3: #eeece6;
+  --bg-info: #e6f1fb;
+  --bg-warn: #faeeda;
+  --bg-danger: #fcebeb;
+  --bg-success: #e1f5ee;
+  --t1: #1a1a18;
+  --t2: #5f5e5a;
+  --t3: #888780;
+  --ti: #0c447c;
+  --b1: rgba(26,26,24,0.12);
+  --b2: rgba(26,26,24,0.22);
+  --font: system-ui, -apple-system, sans-serif;
+  --r-md: 8px;
+  --r-lg: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg1: #1e1e1c;
+    --bg2: #2a2a27;
+    --bg3: #232320;
+    --bg-info: #0c2a45;
+    --bg-warn: #2e200a;
+    --bg-danger: #2a0e0e;
+    --bg-success: #042e1a;
+    --t1: #e8e6df;
+    --t2: #9c9a92;
+    --t3: #6b6a64;
+    --ti: #85b7eb;
+    --b1: rgba(232,230,223,0.10);
+    --b2: rgba(232,230,223,0.20);
+  }
+}
+
+body {
+  background: var(--bg2);
+  font-family: var(--font);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 28px 16px 48px;
+}
+
+.page { width: 100%; max-width: 420px; }
+
+h1 { font-size: 17px; font-weight: 500; color: var(--t1); margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: var(--t2); line-height: 1.5; margin-bottom: 18px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.tab {
+  flex: 1; padding: 9px 6px;
+  border-radius: var(--r-md);
+  border: 0.5px solid var(--b2);
+  background: var(--bg1);
+  font-size: 12px; font-weight: 500;
+  color: var(--t2); cursor: pointer;
+  text-align: center;
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+.tab.active {
+  background: var(--bg-info);
+  color: var(--ti);
+  border-color: rgba(24,95,165,0.35);
+}
+
+/* Views */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ─── SLIDERS ─── */
+.controls {
+  background: var(--bg1);
+  border: 0.5px solid var(--b1);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.ctrl-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.ctrl-row:last-child { margin-bottom: 0; }
+.ctrl-label { font-size: 11px; color: var(--t3); text-transform: uppercase; letter-spacing: .06em; min-width: 90px; }
+.ctrl-row input[type=range] { flex: 1; accent-color: #185FA5; }
+.ctrl-val { min-width: 64px; text-align: right; font-size: 14px; font-weight: 500; color: var(--t1); }
+.risk-pill {
+  display: inline-block; font-size: 10px; font-weight: 500;
+  padding: 2px 8px; border-radius: 20px;
+  margin-left: 6px; vertical-align: middle;
+}
+
+/* ─── PHONE FRAME ─── */
+.phone-wrap {
+  background: var(--bg2);
+  border-radius: 22px;
+  padding: 12px;
+  border: 0.5px solid var(--b2);
+}
+.status-bar {
+  display: flex; justify-content: space-between;
+  padding: 3px 6px 9px;
+  font-size: 11px; color: var(--t3);
+}
+.phone-screen {
+  background: var(--bg1);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 0.5px solid var(--b1);
+  min-height: 420px;
+}
+
+/* Screens */
+.pscreen { display: none; }
+.pscreen.active { display: flex; flex-direction: column; }
+
+/* Nav bar inside phone */
+.phone-nav {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 15px 10px;
+  border-bottom: 0.5px solid var(--b1);
+  flex-shrink: 0;
+}
+.back-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--bg2); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.phone-nav-title { font-size: 14px; font-weight: 500; color: var(--t1); }
+
+.phone-body { padding: 14px 15px 18px; flex: 1; }
+
+/* Intervention card */
+.int-card {
+  border-radius: var(--r-lg);
+  padding: 13px 14px;
+  margin-bottom: 12px;
+  border: 0.5px solid;
+}
+.int-green  { background: #E1F5EE; border-color: #5DCAA5; }
+.int-blue   { background: #E6F1FB; border-color: rgba(24,95,165,0.3); }
+.int-amber  { background: #FAEEDA; border-color: #EF9F27; }
+.int-red    { background: #FCEBEB; border-color: #E24B4A; }
+.int-danger { background: #FCEBEB; border-color: #A32D2D; }
+.int-title  { font-size: 14px; font-weight: 500; margin-bottom: 5px; }
+.int-body   { font-size: 12px; line-height: 1.6; }
+
+/* Signal bars */
+.signals-box {
+  background: var(--bg2);
+  border-radius: var(--r-md);
+  border: 0.5px solid var(--b1);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.signals-title { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.sig-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid var(--b1); }
+.sig-row:last-child { border-bottom: none; }
+.sig-name { font-size: 11px; color: var(--t2); min-width: 100px; display: flex; align-items: center; gap: 5px; }
+.sig-bar-bg { flex: 1; height: 5px; background: var(--b1); border-radius: 3px; overflow: hidden; }
+.sig-bar { height: 100%; border-radius: 3px; transition: width 0.6s ease, background 0.6s ease; }
+.sig-val { min-width: 44px; text-align: right; font-size: 11px; font-weight: 500; }
+
+/* Watch strip */
+.watch-strip {
+  display: flex; align-items: center; gap: 9px;
+  background: var(--bg2); border: 0.5px solid var(--b1);
+  border-radius: var(--r-md); padding: 8px 11px;
+  margin-bottom: 12px; font-size: 12px; color: var(--t2);
+}
+.watch-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0; transition: background 0.4s;
+}
+
+/* Buttons */
+.btn-primary {
+  width: 100%; padding: 13px;
+  border-radius: var(--r-md);
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; border: none;
+  font-family: var(--font);
+  color: #fff;
+  transition: opacity 0.15s, background 0.3s;
+  margin-top: 4px;
+}
+.btn-primary:hover { opacity: 0.88; }
+.btn-ghost {
+  width: 100%; padding: 11px;
+  border-radius: var(--r-md);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: 0.5px solid var(--b2);
+  color: var(--t2);
+  font-family: var(--font);
+  margin-top: 7px;
+}
+.btn-ghost.danger { color: #791F1F; border-color: #F09595; }
+.btn-ghost:hover { background: var(--bg2); }
+
+/* Held card */
+.held-box {
+  background: var(--bg2); border: 0.5px solid var(--b1);
+  border-radius: var(--r-lg); padding: 12px 14px; margin-bottom: 12px;
+}
+.held-row {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: var(--t2); padding: 5px 0;
+  border-bottom: 0.5px solid var(--b1);
+}
+.held-row:last-child { border-bottom: none; }
+.held-val { font-size: 13px; font-weight: 500; color: var(--t1); }
+.status-tag {
+  display: inline-block; font-size: 10px; font-weight: 500;
+  padding: 2px 8px; border-radius: 20px;
+}
+
+/* heartbeat icon */
+@keyframes hb { 0%,100%{transform:scale(1)} 15%{transform:scale(1.3)} 30%{transform:scale(1)} }
+.hb-icon { display: inline-block; }
+.hb-anim { animation: hb 0.83s ease-in-out infinite; }
+
+/* ─── HOW IT WORKS ─── */
+.step-card {
+  background: var(--bg1); border: 0.5px solid var(--b1);
+  border-radius: var(--r-lg); padding: 13px 14px;
+  display: flex; gap: 12px; margin-bottom: 8px;
+}
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 500; flex-shrink: 0; margin-top: 1px;
+}
+.step-title { font-size: 13px; font-weight: 500; color: var(--t1); margin-bottom: 4px; }
+.step-body  { font-size: 12px; color: var(--t2); line-height: 1.6; }
+
+/* ─── PRIVACY ─── */
+.priv-card {
+  background: var(--bg1); border: 0.5px solid var(--b1);
+  border-radius: var(--r-lg); padding: 4px 14px; margin-bottom: 10px;
+}
+.priv-row { display: flex; gap: 11px; padding: 12px 0; border-bottom: 0.5px solid var(--b1); align-items: flex-start; }
+.priv-row:last-child { border-bottom: none; }
+.priv-icon {
+  width: 30px; height: 30px; border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.priv-title { font-size: 13px; font-weight: 500; color: var(--t1); margin-bottom: 3px; }
+.priv-body  { font-size: 12px; color: var(--t2); line-height: 1.55; }
+
+.note { font-size: 11px; color: var(--t3); line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>TD Friction Engine — biometric layer</h1>
+  <p class="subtitle">Wearable heart rate and stress signals fuse with transaction risk in real time. Use the sliders to simulate different scenarios.</p>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('demo')">Live demo</button>
+    <button class="tab" onclick="showTab('how')">How it works</button>
+    <button class="tab" onclick="showTab('privacy')">Privacy</button>
+  </div>
+
+  <!-- ══════════════════════ DEMO VIEW ══════════════════════ -->
+  <div class="view active" id="view-demo">
+
+    <!-- Sliders -->
+    <div class="controls">
+      <div class="ctrl-row">
+        <span class="ctrl-label">Heart rate</span>
+        <input type="range" min="50" max="150" step="1" value="72" id="sl-hr" oninput="onSlider()">
+        <span class="ctrl-val"><span id="disp-hr">72</span> <span style="font-size:11px;color:var(--t3)">BPM</span></span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Transfer</span>
+        <input type="range" min="500" max="9500" step="500" value="3500" id="sl-amt" oninput="onSlider()">
+        <span class="ctrl-val" id="disp-amt">$3,500</span>
+      </div>
+    </div>
+
+    <!-- Phone -->
+    <div class="phone-wrap">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span>TD Bank</span>
+        <span style="display:flex;gap:4px;align-items:center">
+          <svg width="13" height="9" viewBox="0 0 13 9" fill="none"><rect x="0" y="3" width="2" height="6" rx="1" fill="currentColor"/><rect x="3.5" y="2" width="2" height="7" rx="1" fill="currentColor"/><rect x="7" y="1" width="2" height="8" rx="1" fill="currentColor"/><rect x="10.5" y="0" width="2" height="9" rx="1" fill="currentColor" opacity=".3"/></svg>
+          <svg width="15" height="9" viewBox="0 0 15 9" fill="none"><rect x="0" y=".5" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1"/><rect x="1.5" y="2" width="7" height="5" rx=".5" fill="currentColor"/><rect x="13" y="3" width="1.5" height="3" rx=".75" fill="currentColor"/></svg>
+        </span>
+      </div>
+
+      <div class="phone-screen">
+
+        <!-- ── SCREEN: REVIEW ── -->
+        <div class="pscreen active" id="sc-review">
+          <div class="phone-nav">
+            <button class="back-btn" onclick="showScreen('sc-home')">
+              <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M6 1L1 6l5 5" stroke="var(--t2)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span class="phone-nav-title">Before you send</span>
+          </div>
+          <div class="phone-body">
+
+            <!-- Intervention card — populated by JS -->
+            <div id="int-zone"></div>
+
+            <!-- Signal bars -->
+            <div class="signals-box">
+              <div class="signals-title">Risk signals</div>
+              <div class="sig-row">
+                <span class="sig-name">Transaction</span>
+                <div class="sig-bar-bg"><div class="sig-bar" id="bar-txn" style="width:50%"></div></div>
+                <span class="sig-val" id="lbl-txn">Med</span>
+              </div>
+              <div class="sig-row">
+                <span class="sig-name">
+                  <span class="hb-icon" id="hb"><svg width="12" height="11" viewBox="0 0 12 11" fill="none"><path d="M6 10S1 6.5 1 3.5a2.5 2.5 0 015 0 2.5 2.5 0 015 0C11 6.5 6 10 6 10z" fill="#E24B4A"/></svg></span>
+                  Heart rate
+                </span>
+                <div class="sig-bar-bg"><div class="sig-bar" id="bar-hr" style="width:28%"></div></div>
+                <span class="sig-val" id="lbl-hr">Normal</span>
+              </div>
+              <div class="sig-row">
+                <span class="sig-name">Stress index</span>
+                <div class="sig-bar-bg"><div class="sig-bar" id="bar-stress" style="width:18%"></div></div>
+                <span class="sig-val" id="lbl-stress">Low</span>
+              </div>
+            </div>
+
+            <!-- Watch strip -->
+            <div class="watch-strip">
+              <div class="watch-dot" id="watch-dot" style="background:#1D9E75"></div>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><rect x="2.5" y="1" width="9" height="12" rx="2" stroke="var(--t2)" stroke-width="1.1"/><path d="M4 7.5l1.5-3 2 4.5 1.5-3 .8 1.5" stroke="var(--t2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span id="watch-label" style="flex:1">Apple Watch connected · reading biometrics</span>
+              <span id="watch-status" style="font-size:11px;font-weight:500;color:#1D9E75">Normal</span>
+            </div>
+
+            <button class="btn-primary" id="cta-btn" onclick="showScreen('sc-hold')">Continue →</button>
+            <button class="btn-ghost" onclick="showScreen('sc-home')">Cancel</button>
+          </div>
+        </div>
+
+        <!-- ── SCREEN: HOLD ── -->
+        <div class="pscreen" id="sc-hold">
+          <div class="phone-nav">
+            <span class="phone-nav-title" id="hold-title">Transfer queued</span>
+          </div>
+          <div class="phone-body">
+            <div id="hold-int"></div>
+            <div class="held-box" id="held-box"></div>
+            <button class="btn-primary" style="background:#185FA5" onclick="showScreen('sc-review')">← Back to review</button>
+            <button class="btn-ghost danger" onclick="showScreen('sc-home')">Cancel transfer</button>
+          </div>
+        </div>
+
+        <!-- ── SCREEN: HOME ── -->
+        <div class="pscreen" id="sc-home">
+          <div class="phone-body" style="display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:380px;text-align:center;gap:10px">
+            <div style="font-size:15px;font-weight:500;color:var(--t1)">TD Bank</div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.5;max-width:200px">Adjust the sliders above then tap the button below to see how the friction layer responds.</div>
+            <button class="btn-primary" style="background:#185FA5;margin-top:8px;max-width:200px" onclick="showScreen('sc-review')">Review transfer →</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="note" style="margin-top:9px;padding:0 2px">
+      Try: HR 130 + $8,000 transfer for the coercion scenario. HR 95 + $4,000 for a stress check-in. HR 65 + $500 for a clean pass.
+    </p>
+  </div>
+
+  <!-- ══════════════════════ HOW IT WORKS ══════════════════════ -->
+  <div class="view" id="view-how">
+    <div class="step-card">
+      <div class="step-num" style="background:#EEEDFE;color:#3C3489">1</div>
+      <div>
+        <div class="step-title">Wearable opt-in</div>
+        <div class="step-body">Customer connects Apple Watch, Fitbit, or Garmin via HealthKit or Health Connect during TD app setup. A plain-language consent screen explains exactly what is shared. Revocable in one tap anytime.</div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num" style="background:#E1F5EE;color:#085041">2</div>
+      <div>
+        <div class="step-title">On-device signal processing</div>
+        <div class="step-body">Heart rate, HRV, and skin conductance are processed locally on the phone. A lightweight on-device model computes a stress score (0–100). Raw biometric data never leaves the device — only the derived score is used during an active transfer session.</div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num" style="background:#FAEEDA;color:#633806">3</div>
+      <div>
+        <div class="step-title">Friction Engine fusion</div>
+        <div class="step-body">The transaction risk score (amount, recipient novelty, timing, account history) is fused with the biometric stress index. High transaction risk + elevated HR = longer hold, more explicit copy. Low transaction risk + elevated HR = gentle check-in only.</div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num" style="background:#E6F1FB;color:#0C447C">4</div>
+      <div>
+        <div class="step-title">Contextual intervention</div>
+        <div class="step-body">Copy adapts to the signal combination. Coercion scenario (very high HR + large new-contact transfer) surfaces the silent duress option. Anxiety scenario (moderate HR + new contact) shows a "take a breath" pause. Normal HR + flagged transaction = standard friction, no biometric mention at all.</div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num" style="background:#E1F5EE;color:#085041">5</div>
+      <div>
+        <div class="step-title">Wearable haptic feedback</div>
+        <div class="step-body">When the Friction Engine fires, the Apple Watch or Fitbit delivers a quiet haptic tap simultaneously. In a coercion scenario where someone is being watched, a private wrist tap is a signal the attacker can't see — the phone screen doesn't need to change visibly at all.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ PRIVACY ══════════════════════ -->
+  <div class="view" id="view-privacy">
+    <div class="priv-card">
+      <div class="priv-row">
+        <div class="priv-icon" style="background:#E1F5EE">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="6.5" width="10" height="7" rx="1.5" stroke="#0F6E56" stroke-width="1.2"/><path d="M4.5 6.5V5a2.5 2.5 0 015 0v1.5" stroke="#0F6E56" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="priv-title">Raw data stays on your device</div>
+          <div class="priv-body">Heart rate, HRV, and skin conductance never leave your phone. Only a single derived stress score is passed to the Friction Engine, and only during an active transfer session — never stored or logged.</div>
+        </div>
+      </div>
+      <div class="priv-row">
+        <div class="priv-icon" style="background:#E6F1FB">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5l1.4 2.8 3.1.45-2.25 2.2.53 3.1L7 8.5l-2.78 1.55.53-3.1L2.5 4.75l3.1-.45z" stroke="#185FA5" stroke-width="1.1" fill="none" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="priv-title">Explicit opt-in only</div>
+          <div class="priv-body">Biometric integration is off by default. It requires a separate consent from standard app permissions, with a plain-language explanation of every signal and how it is used. Off by default, always.</div>
+        </div>
+      </div>
+      <div class="priv-row">
+        <div class="priv-icon" style="background:#FAEEDA">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 4v3m0 2v.5" stroke="#854F0B" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="priv-title">Never used to deny service</div>
+          <div class="priv-body">Biometric signals can only add friction or trigger a protective pause. They can never block a transaction, affect your credit, or be shared with any third party — including insurers or advertisers.</div>
+        </div>
+      </div>
+      <div class="priv-row">
+        <div class="priv-icon" style="background:#EEEDFE">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2v10" stroke="#534AB7" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="priv-title">Revoke in one tap</div>
+          <div class="priv-body">Disconnecting wearable integration takes one tap in TD Settings → Privacy → Health data. All derived scores are purged immediately. The Friction Engine continues on transaction signals alone.</div>
+        </div>
+      </div>
+      <div class="priv-row">
+        <div class="priv-icon" style="background:#FCEBEB">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L1 12h12L7 1zm0 4v3m0 2.5v.5" stroke="#A32D2D" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="priv-title">Duress gesture — coercion exception</div>
+          <div class="priv-body">Customers can pre-configure a double-press watch crown gesture that silently alerts TD and emergency services without changing what appears on screen — protecting them from a threat that's physically present.</div>
+        </div>
+      </div>
+    </div>
+    <p class="note">Biometric integration uses Apple HealthKit and Google Health Connect APIs. TD never has direct access to the wearable device or its full health record.</p>
+  </div>
+
+</div><!-- end .page -->
+
+<script>
+var hr = 72;
+var amt = 3500;
+var currentScreen = 'sc-review';
+
+function showTab(t) {
+  document.querySelectorAll('.tab').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  document.getElementById('view-' + t).classList.add('active');
+  var idx = { demo: 0, how: 1, privacy: 2 }[t];
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.pscreen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  currentScreen = id;
+  if (id === 'sc-hold') buildHoldScreen();
+}
+
+function onSlider() {
+  hr = parseInt(document.getElementById('sl-hr').value);
+  amt = parseInt(document.getElementById('sl-amt').value);
+  document.getElementById('disp-hr').textContent = hr;
+  document.getElementById('disp-amt').textContent = '$' + amt.toLocaleString('en-CA');
+  updateDemo();
+}
+
+function txnRisk(a) {
+  if (a < 2000) return 'low';
+  if (a < 5000) return 'medium';
+  if (a < 8000) return 'high';
+  return 'critical';
+}
+
+function hrState(h) {
+  if (h < 65)  return { label: 'Resting',   pct: 12, color: '#1D9E75' };
+  if (h < 85)  return { label: 'Normal',    pct: 28, color: '#1D9E75' };
+  if (h < 100) return { label: 'Elevated',  pct: 55, color: '#EF9F27' };
+  if (h < 120) return { label: 'High',      pct: 74, color: '#E24B4A' };
+  return               { label: 'Very high', pct: 94, color: '#A32D2D' };
+}
+
+function stressLevel(h) {
+  if (h < 70)  return { label: 'Low',      pct: 16, color: '#1D9E75' };
+  if (h < 88)  return { label: 'Moderate', pct: 40, color: '#EF9F27' };
+  if (h < 105) return { label: 'Elevated', pct: 64, color: '#E24B4A' };
+  return               { label: 'High',    pct: 88, color: '#A32D2D' };
+}
+
+function updateDemo() {
+  var tr = txnRisk(amt);
+  var hs = hrState(hr);
+  var st = stressLevel(hr);
+
+  /* txn bar */
+  var txnData = { low: { pct:18, color:'#1D9E75', label:'Low' }, medium: { pct:50, color:'#EF9F27', label:'Med' }, high: { pct:74, color:'#E24B4A', label:'High' }, critical: { pct:94, color:'#A32D2D', label:'Critical' } }[tr];
+  setBar('bar-txn', txnData.pct, txnData.color);
+  setLbl('lbl-txn', txnData.label, txnData.color);
+
+  /* hr bar */
+  setBar('bar-hr', hs.pct, hs.color);
+  setLbl('lbl-hr', hs.label, hs.color);
+
+  /* stress bar */
+  setBar('bar-stress', st.pct, st.color);
+  setLbl('lbl-stress', st.label, st.color);
+
+  /* heartbeat speed */
+  var speed = Math.max(0.35, Math.min(1.0, 60 / hr)).toFixed(2);
+  var hbEl = document.getElementById('hb');
+  if (hr >= 85) {
+    hbEl.classList.add('hb-anim');
+    hbEl.style.animationDuration = speed + 's';
+  } else {
+    hbEl.classList.remove('hb-anim');
+  }
+
+  /* watch strip */
+  var wdot = document.getElementById('watch-dot');
+  var wlbl = document.getElementById('watch-label');
+  var wsts = document.getElementById('watch-status');
+  if (hr >= 120) {
+    wdot.style.background = '#A32D2D';
+    wlbl.textContent = 'Apple Watch · very elevated HR detected';
+    wsts.textContent = 'Alert'; wsts.style.color = '#A32D2D';
+  } else if (hr >= 100) {
+    wdot.style.background = '#E24B4A';
+    wlbl.textContent = 'Apple Watch · elevated heart rate';
+    wsts.textContent = 'Flagged'; wsts.style.color = '#E24B4A';
+  } else if (hr >= 85) {
+    wdot.style.background = '#EF9F27';
+    wlbl.textContent = 'Apple Watch · slightly above baseline';
+    wsts.textContent = 'Watching'; wsts.style.color = '#EF9F27';
+  } else {
+    wdot.style.background = '#1D9E75';
+    wlbl.textContent = 'Apple Watch connected · reading biometrics';
+    wsts.textContent = 'Normal'; wsts.style.color = '#1D9E75';
+  }
+
+  buildIntervention(tr, hr);
+}
+
+function setBar(id, pct, color) {
+  var el = document.getElementById(id);
+  el.style.width = pct + '%';
+  el.style.background = color;
+}
+
+function setLbl(id, text, color) {
+  var el = document.getElementById(id);
+  el.textContent = text;
+  el.style.color = color;
+}
+
+function buildIntervention(tr, h) {
+  var zone = document.getElementById('int-zone');
+  var cta  = document.getElementById('cta-btn');
+
+  /* COERCION — very high HR + large transfer */
+  if (h >= 120 && (tr === 'high' || tr === 'critical')) {
+    zone.innerHTML =
+      '<div class="int-card int-danger">' +
+      '<div class="int-title" style="color:#A32D2D">Are you okay right now?</div>' +
+      '<div class="int-body" style="color:#791F1F">Your heart rate is significantly elevated. If someone is pressuring you to make this transfer, you do not have to continue.<br><br>' +
+      '<strong>Double-press your watch crown to silently alert TD and emergency services.</strong><br><br>' +
+      'This transfer will be held and a TD specialist will call you within 15 minutes.</div>' +
+      '</div>';
+    cta.textContent = "I'm fine — continue anyway";
+    cta.style.background = '#E24B4A';
+    return;
+  }
+
+  /* HIGH STRESS + HIGH RISK */
+  if (h >= 100 && (tr === 'high' || tr === 'critical')) {
+    zone.innerHTML =
+      '<div class="int-card int-red">' +
+      '<div class="int-title" style="color:#A32D2D">Take a moment</div>' +
+      '<div class="int-body" style="color:#791F1F">Your heart rate is well above your normal baseline for banking activity, and this transfer has several unusual signals. ' +
+      'We\'re not blocking anything — but we\'d like you to take 30 seconds before continuing.<br><br>' +
+      'If anyone has asked or pressured you to send this money, you can stop here with no consequence.</div>' +
+      '</div>';
+    cta.textContent = "I'm sure — continue";
+    cta.style.background = '#185FA5';
+    return;
+  }
+
+  /* MODERATE STRESS + ANY RISK */
+  if (h >= 88 && tr !== 'low') {
+    zone.innerHTML =
+      '<div class="int-card int-amber">' +
+      '<div class="int-title" style="color:#633806">Take a breath</div>' +
+      '<div class="int-body" style="color:#633806">Your wearable has picked up a slightly elevated stress signal alongside some unusual transaction patterns. ' +
+      'This is just a check-in — tap continue whenever you\'re ready.</div>' +
+      '</div>';
+    cta.textContent = 'All good — continue';
+    cta.style.background = '#185FA5';
+    return;
+  }
+
+  /* MILD HR + FLAGGED TXN */
+  if (h >= 85 && tr !== 'low') {
+    zone.innerHTML =
+      '<div class="int-card int-blue">' +
+      '<div class="int-title" style="color:#0C447C">Quick check-in</div>' +
+      '<div class="int-body" style="color:#0C447C">A few signals on this transfer are worth a moment\'s review. Your vitals look mostly fine. Take a look at the details below.</div>' +
+      '</div>';
+    cta.textContent = 'Reviewed — continue';
+    cta.style.background = '#185FA5';
+    return;
+  }
+
+  /* LOW RISK EVERYTHING */
+  if (tr === 'low' && h < 85) {
+    zone.innerHTML =
+      '<div class="int-card int-green">' +
+      '<div class="int-title" style="color:#085041">Looking good</div>' +
+      '<div class="int-body" style="color:#085041">This transfer looks routine and your vitals are calm. Just a quick summary before it sends.</div>' +
+      '</div>';
+    cta.textContent = 'Send →';
+    cta.style.background = '#1D9E75';
+    return;
+  }
+
+  /* DEFAULT */
+  zone.innerHTML =
+    '<div class="int-card" style="background:var(--bg2);border:0.5px solid var(--b1)">' +
+    '<div class="int-title" style="color:var(--t1)">Before you send</div>' +
+    '<div class="int-body" style="color:var(--t2)">A few signals flagged on this transfer. Your vitals look normal. Take a moment to review the details below.</div>' +
+    '</div>';
+  cta.textContent = "I've reviewed — continue";
+  cta.style.background = '#185FA5';
+}
+
+function buildHoldScreen() {
+  var tr = txnRisk(amt);
+  var holdMins = { low: 0, medium: 30, high: 60, critical: 180 }[tr];
+  var isCoercion = hr >= 120 && (tr === 'high' || tr === 'critical');
+  if (isCoercion) holdMins = 999;
+
+  var now = new Date();
+  now.setMinutes(now.getMinutes() + (isCoercion ? 0 : holdMins));
+  var hh = now.getHours(), mm = now.getMinutes(), ap = hh >= 12 ? 'PM' : 'AM';
+  hh = hh % 12 || 12;
+  var timeStr = hh + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ap;
+
+  var titleEl = document.getElementById('hold-title');
+  var intEl   = document.getElementById('hold-int');
+  var boxEl   = document.getElementById('held-box');
+
+  if (isCoercion) {
+    titleEl.textContent = 'Transfer paused — are you safe?';
+    intEl.innerHTML =
+      '<div class="int-card int-danger" style="margin-bottom:12px">' +
+      '<div class="int-title" style="color:#A32D2D">We\'ve paused this transfer</div>' +
+      '<div class="int-body" style="color:#791F1F">Given the signals detected, this transfer is on hold. A TD specialist will call you at the number on your account within 15 minutes.<br><br>' +
+      'If you\'re in immediate danger, <strong>double-press your watch crown</strong> or call 911.</div>' +
+      '</div>';
+  } else if (holdMins > 0) {
+    titleEl.textContent = 'Transfer held — ' + holdMins + ' min';
+    intEl.innerHTML =
+      '<div class="int-card int-amber" style="margin-bottom:12px">' +
+      '<div class="int-title" style="color:#633806">Cooling-off period active</div>' +
+      '<div class="int-body" style="color:#633806">Your transfer is queued and will send automatically at ' + timeStr + ' unless you cancel it first. ' +
+      'This gives you time to verify everything is right.</div>' +
+      '</div>';
+  } else {
+    titleEl.textContent = 'Transfer ready';
+    intEl.innerHTML =
+      '<div class="int-card int-green" style="margin-bottom:12px">' +
+      '<div class="int-title" style="color:#085041">Ready to send</div>' +
+      '<div class="int-body" style="color:#085041">No hold applied. Your transfer will process immediately.</div>' +
+      '</div>';
+  }
+
+  var statusLabel = isCoercion ? 'On hold' : holdMins > 0 ? 'Cooling off' : 'Processing';
+  var statusBg    = isCoercion ? '#FCEBEB' : holdMins > 0 ? '#FAEEDA' : '#E1F5EE';
+  var statusColor = isCoercion ? '#791F1F' : holdMins > 0 ? '#633806' : '#085041';
+  var sendsAt     = isCoercion ? 'Specialist calling you' : holdMins > 0 ? timeStr : 'Now';
+
+  boxEl.innerHTML =
+    '<div class="held-row"><span>To</span><span class="held-val">Michael K.</span></div>' +
+    '<div class="held-row"><span>Amount</span><span class="held-val">$' + amt.toLocaleString('en-CA') + '</span></div>' +
+    '<div class="held-row"><span>Sends at</span><span class="held-val">' + sendsAt + '</span></div>' +
+    '<div class="held-row"><span>Status</span><span class="status-tag" style="background:' + statusBg + ';color:' + statusColor + '">' + statusLabel + '</span></div>';
+}
+
+/* init */
+updateDemo();
+</script>
+</body>
+</html>

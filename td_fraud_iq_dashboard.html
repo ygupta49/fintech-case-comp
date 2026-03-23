@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TD Fraud IQ</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg1:#ffffff;--bg2:#f5f4f0;--bg-info:#e6f1fb;--bg-warn:#faeeda;--bg-danger:#fcebeb;--bg-success:#e1f5ee;
+  --t1:#1a1a18;--t2:#5f5e5a;--t3:#888780;--ti:#0c447c;
+  --b1:rgba(26,26,24,0.12);--b2:rgba(26,26,24,0.22);
+  --r-md:8px;--r-lg:12px;
+  --font:system-ui,-apple-system,sans-serif;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg1:#1e1e1c;--bg2:#2a2a27;--bg-info:#0c2a45;--bg-warn:#2e200a;--bg-danger:#2a0e0e;--bg-success:#042e1a;
+    --t1:#e8e6df;--t2:#9c9a92;--t3:#6b6a64;--ti:#85b7eb;
+    --b1:rgba(232,230,223,0.1);--b2:rgba(232,230,223,0.2);
+  }
+}
+body{background:var(--bg2);font-family:var(--font);display:flex;justify-content:center;padding:32px 16px;min-height:100vh}
+.phone{background:var(--bg2);border-radius:22px;padding:16px;width:360px;border:0.5px solid var(--b2)}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.score-ring{display:flex;flex-direction:column;align-items:center;padding:20px 0 12px}
+.badge{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px}
+.section-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px}
+.sig-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg1);border-radius:var(--r-md);border:0.5px solid var(--b1);margin-bottom:6px}
+.sig-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sig-label{font-size:13px;color:var(--t1);font-weight:500}
+.sig-sub{font-size:11px;color:var(--t2);margin-top:1px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;gap:4px}
+.bar-bg{height:4px;background:var(--b1);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px}
+.cta-btn{width:100%;padding:12px;background:var(--bg-info);color:var(--ti);border:none;border-radius:var(--r-md);font-size:14px;font-weight:500;cursor:pointer;margin-top:16px;font-family:var(--font);transition:opacity .15s}
+.cta-btn:hover{opacity:.82}
+.drill-wrap{display:none}
+.drill-wrap.on{display:block}
+.chatbar{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:0.5px solid var(--b1);background:#1a3a2a;border-radius:10px 10px 0 0}
+.av{width:36px;height:36px;border-radius:50%;background:#1D9E75;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.body{padding:16px 15px 20px;background:var(--bg2);border-radius:0 0 10px 10px}
+.scr{display:none}.scr.on{display:block}
+.pips{display:flex;gap:4px;margin-bottom:13px}
+.pip{height:3px;flex:1;border-radius:2px;background:var(--b1)}
+.pip.d{background:#1D9E75}.pip.n{background:#185FA5}
+.msg{border-radius:14px;padding:10px 13px;font-size:13px;line-height:1.55;margin-bottom:7px;max-width:92%}
+.them{background:var(--bg1);border:0.5px solid var(--b1);color:var(--t1)}
+.warn{background:var(--bg-warn);border:0.5px solid #EF9F27;border-radius:var(--r-md);padding:9px 12px;font-size:12px;color:#633806;display:flex;gap:8px;align-items:flex-start;line-height:1.45;margin-bottom:11px}
+.qlabel{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin:13px 0 7px}
+.ch{width:100%;text-align:left;padding:10px 13px;border-radius:var(--r-md);border:0.5px solid var(--b2);background:var(--bg1);font-size:13px;color:var(--t1);cursor:pointer;margin-bottom:6px;line-height:1.4;transition:background .12s;font-family:var(--font)}
+.ch:hover:not(:disabled){background:var(--bg2)}
+.ch.bad{background:#FCEBEB;border-color:#E24B4A;color:#791F1F;cursor:default}
+.ch.good{background:#E1F5EE;border-color:#1D9E75;color:#085041;cursor:default}
+.ch:disabled{cursor:default;opacity:.45}
+.fb{border-radius:var(--r-md);padding:10px 13px;font-size:12px;line-height:1.5;margin:3px 0 6px}
+.fb.bad{background:#FCEBEB;color:#791F1F;border:0.5px solid #F09595}
+.fb.good{background:#E1F5EE;color:#085041;border:0.5px solid #5DCAA5}
+.next-btn{width:100%;padding:11px;background:var(--bg-info);color:var(--ti);border:none;border-radius:var(--r-md);font-size:13px;font-weight:500;cursor:pointer;margin-top:6px;font-family:var(--font);transition:opacity .15s}
+.next-btn:hover{opacity:.82}
+.tactic{display:inline-block;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;margin:3px 3px 3px 0}
+.rule-row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:0.5px solid var(--b1);font-size:12px;line-height:1.45;color:var(--t1)}
+.rule-row:last-child{border-bottom:none}
+.dot-g{width:7px;height:7px;border-radius:50%;background:#1D9E75;flex-shrink:0;margin-top:4px}
+.dot-r{width:7px;height:7px;border-radius:50%;background:#E24B4A;flex-shrink:0;margin-top:4px}
+.back-btn{width:100%;padding:11px;background:var(--bg2);color:var(--t2);border:0.5px solid var(--b2);border-radius:var(--r-md);font-size:13px;font-weight:500;cursor:pointer;margin-top:7px;font-family:var(--font)}
+.back-btn:hover{opacity:.8}
+.pulse{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;animation:pd 1.4s ease-in-out infinite;margin-right:4px}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+    <div class="dash-header">
+      <div>
+        <div style="font-size:15px;font-weight:500;color:var(--t1)">Fraud IQ</div>
+        <div style="font-size:12px;color:var(--t2)">Updated today</div>
+      </div>
+      <div style="width:36px;height:36px;border-radius:50%;background:#1D5B8E;display:flex;align-items:center;justify-content:center">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2a7 7 0 100 14A7 7 0 009 2zm0 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 8.5c-1.75 0-3.3-.9-4.2-2.25.02-.7 2.8-1.08 4.2-1.08 1.4 0 4.18.39 4.2 1.08A5.02 5.02 0 019 13.5z" fill="#fff"/></svg>
+      </div>
+    </div>
+    <div class="score-ring">
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="58" fill="none" stroke="var(--b1)" stroke-width="10"/>
+        <circle cx="70" cy="70" r="58" fill="none" stroke="#1D9E75" stroke-width="10" stroke-dasharray="365" stroke-dashoffset="91" stroke-linecap="round" transform="rotate(-90 70 70)"/>
+        <text x="70" y="66" text-anchor="middle" font-size="32" font-weight="500" fill="var(--t1)" font-family="system-ui,sans-serif">75</text>
+        <text x="70" y="84" text-anchor="middle" font-size="12" fill="var(--t2)" font-family="system-ui,sans-serif">out of 100</text>
+      </svg>
+      <span class="badge" style="background:#E1F5EE;color:#085041">Good resilience</span>
+      <div style="font-size:12px;color:var(--t2);margin-top:6px;text-align:center">You're more protected than 68% of TD clients</div>
+    </div>
+    <div class="section-label">Your vulnerability signals</div>
+    <div class="sig-row">
+      <div class="sig-icon" style="background:#E1F5EE"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.8 3.6L14 5.3l-3 2.9.7 4.1L8 10.4l-3.7 1.9.7-4.1-3-2.9 4.2-.7z" fill="#0F6E56"/></svg></div>
+      <div style="flex:1">
+        <div class="sig-label">Transfer awareness</div>
+        <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:82%;background:#1D9E75"></div></div></div>
+      </div>
+      <div style="font-size:12px;font-weight:500;color:#0F6E56">82</div>
+    </div>
+    <div class="sig-row">
+      <div class="sig-icon" style="background:#FAEEDA"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 2.5a.75.75 0 110 1.5.75.75 0 010-1.5zm0 2.5c.41 0 .75.34.75.75v3.5a.75.75 0 01-1.5 0v-3.5c0-.41.34-.75.75-.75z" fill="#854F0B"/></svg></div>
+      <div style="flex:1">
+        <div class="sig-label">Urgency resistance</div>
+        <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:58%;background:#EF9F27"></div></div></div>
+        <div class="sig-sub">You clicked fast on last week's drill</div>
+      </div>
+      <div style="font-size:12px;font-weight:500;color:#854F0B">58</div>
+    </div>
+    <div class="sig-row">
+      <div class="sig-icon" style="background:#FCEBEB"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L1.5 13h13L8 1.5zm0 3.5l3.2 5.5H4.8L8 5z" fill="#A32D2D"/></svg></div>
+      <div style="flex:1">
+        <div class="sig-label">Authority skepticism</div>
+        <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:41%;background:#E24B4A"></div></div></div>
+        <div class="sig-sub">Impersonation is a top risk for you</div>
+      </div>
+      <div style="font-size:12px;font-weight:500;color:#A32D2D">41</div>
+    </div>
+    <div class="sig-row">
+      <div class="sig-icon" style="background:#E1F5EE"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 3H3a1 1 0 00-1 1v7a1 1 0 001 1h2v2l3-2h5a1 1 0 001-1V4a1 1 0 00-1-1z" fill="#0F6E56"/></svg></div>
+      <div style="flex:1">
+        <div class="sig-label">Romance pattern awareness</div>
+        <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:79%;background:#1D9E75"></div></div></div>
+      </div>
+      <div style="font-size:12px;font-weight:500;color:#0F6E56">79</div>
+    </div>
+    <button class="cta-btn" onclick="openDrill()">Practice authority skepticism drill →</button>
+  </div>
+
+  <!-- DRILL -->
+  <div class="drill-wrap" id="drill">
+    <div style="font-size:12px;color:var(--t2);margin-bottom:11px;line-height:1.5"><strong style="color:var(--t1)">Authority impersonation drill</strong> — simulated scenario. No real action taken.</div>
+    <div style="background:var(--bg1);border-radius:12px;overflow:hidden;border:0.5px solid var(--b2)">
+      <div class="chatbar">
+        <div class="av"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2a7 7 0 100 14A7 7 0 009 2zm0 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 8.5c-1.75 0-3.3-.9-4.2-2.25.02-.7 2.8-1.08 4.2-1.08 1.4 0 4.18.39 4.2 1.08A5.02 5.02 0 019 13.5z" fill="#fff"/></svg></div>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:#fff"><span class="pulse"></span>TD Fraud Prevention</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6)">1-866-222-3456 · incoming</div>
+        </div>
+      </div>
+      <div class="body">
+
+        <div class="scr on" id="d0">
+          <div class="pips"><div class="pip n"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+          <div class="msg them">"Hello, this is Alex from TD Fraud Prevention. We've detected suspicious activity — three unauthorized transactions totalling $2,340. I need to verify your identity immediately to stop further charges."</div>
+          <div class="msg them">"Can you confirm your online banking password so I can lock the account right now?"</div>
+          <div class="qlabel">How do you respond?</div>
+          <button class="ch" id="d0c0" onclick="pick(0,0,false)">"Sure, my password is..."</button>
+          <button class="ch" id="d0c1" onclick="pick(0,1,false)">"Let me check my app — I'll see the transactions there."</button>
+          <button class="ch" id="d0c2" onclick="pick(0,2,true)">"TD would never ask for my password. I'm hanging up and calling the number on my card."</button>
+          <div id="d0fb"></div>
+          <div id="d0nx" style="display:none"><button class="next-btn" onclick="goStep(1)">Continue — they escalate →</button></div>
+        </div>
+
+        <div class="scr" id="d1">
+          <div class="pips"><div class="pip d"></div><div class="pip n"></div><div class="pip"></div><div class="pip"></div></div>
+          <div class="msg them">"I understand your concern — but the fraudster is actively moving money right now. Every second counts. If you don't verify with me immediately, we cannot stop this transfer."</div>
+          <div class="qlabel">They're escalating urgency. What now?</div>
+          <button class="ch" id="d1c0" onclick="pick(1,0,false)">"Okay, but only my partial password..."</button>
+          <button class="ch" id="d1c1" onclick="pick(1,1,true)">"The urgency you're creating is a classic fraud tactic. I'm ending this call now."</button>
+          <button class="ch" id="d1c2" onclick="pick(1,2,false)">"I'll give you my account number but not my password."</button>
+          <div id="d1fb"></div>
+          <div id="d1nx" style="display:none"><button class="next-btn" onclick="goStep(2)">Continue — a new angle →</button></div>
+        </div>
+
+        <div class="scr" id="d2">
+          <div class="pips"><div class="pip d"></div><div class="pip d"></div><div class="pip n"></div><div class="pip"></div></div>
+          <div class="msg them">"I'm escalating to my supervisor. While I transfer you — our system just sent you a one-time code. Please read it to me so we can authenticate the session."</div>
+          <div style="background:#1B3D5C;border-radius:10px;padding:10px 13px;margin-bottom:10px">
+            <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:3px">TD Bank · text message</div>
+            <div style="font-size:13px;color:#fff;line-height:1.5">Your TD verification code is <strong>847291</strong>. <span style="color:#f9c74f">NEVER share this code with anyone, including TD staff.</span></div>
+          </div>
+          <div class="qlabel">You receive a text. What do you do?</div>
+          <button class="ch" id="d2c0" onclick="pick(2,0,false)">"The code is 847291."</button>
+          <button class="ch" id="d2c1" onclick="pick(2,1,true)">"The text itself says never share this — even with TD. This confirms you're a scammer."</button>
+          <button class="ch" id="d2c2" onclick="pick(2,2,false)">"I'll share it after you tell me the last 4 digits of my card."</button>
+          <div id="d2fb"></div>
+          <div id="d2nx" style="display:none"><button class="next-btn" onclick="goStep(3)">Final stage →</button></div>
+        </div>
+
+        <div class="scr" id="d3">
+          <div class="pips"><div class="pip d"></div><div class="pip d"></div><div class="pip d"></div><div class="pip n"></div></div>
+          <div class="msg them">"This is Janet Mills, senior analyst. The fraudulent transfer is still pending. I need you to move your remaining balance to a safe holding account we've set up while we investigate."</div>
+          <div class="warn">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0;margin-top:1px"><path d="M6.5 1L1 11.5h11L6.5 1zm0 3v3m0 2.3v.5" stroke="#854F0B" stroke-width="1.2" stroke-linecap="round"/></svg>
+            New voice, professional tone — but the request just escalated dramatically.
+          </div>
+          <div class="qlabel">What is happening here?</div>
+          <button class="ch" id="d3c0" onclick="pick(3,0,false)">"A supervisor got involved — maybe this is legitimate."</button>
+          <button class="ch" id="d3c1" onclick="pick(3,1,true)">"This is a 'safe account' scam. I'm hanging up and calling TD on 1-866-222-3456."</button>
+          <button class="ch" id="d3c2" onclick="pick(3,2,false)">"I'll ask for the holding account details to verify independently."</button>
+          <div id="d3fb"></div>
+          <div id="d3nx" style="display:none"><button class="next-btn" onclick="goStep(4)">See results →</button></div>
+        </div>
+
+        <div class="scr" id="d4">
+          <div style="text-align:center;padding-bottom:14px;border-bottom:0.5px solid var(--b1);margin-bottom:14px">
+            <div style="font-size:34px;font-weight:500;color:var(--t1)" id="dscore">—</div>
+            <div style="font-size:14px;font-weight:500;color:var(--t1);margin-top:2px" id="dlabel">—</div>
+            <div style="font-size:12px;color:var(--t2);margin-top:4px" id="dsub">—</div>
+          </div>
+          <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Tactics used</div>
+          <div style="margin-bottom:14px">
+            <span class="tactic" style="background:#FCEBEB;color:#791F1F">False urgency</span>
+            <span class="tactic" style="background:#FAEEDA;color:#633806">Authority spoofing</span>
+            <span class="tactic" style="background:#FAEEDA;color:#633806">OTP harvesting</span>
+            <span class="tactic" style="background:#FCEBEB;color:#791F1F">Safe account redirect</span>
+          </div>
+          <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Rules that protect you</div>
+          <div style="background:var(--bg1);border:0.5px solid var(--b1);border-radius:var(--r-lg);padding:4px 12px;margin-bottom:14px">
+            <div class="rule-row"><div class="dot-g"></div><div>TD will <strong>never</strong> ask for your password, PIN, or full card number over the phone</div></div>
+            <div class="rule-row"><div class="dot-g"></div><div>TD will <strong>never</strong> ask you to read a one-time code back to them</div></div>
+            <div class="rule-row"><div class="dot-g"></div><div>TD will <strong>never</strong> ask you to move money to a "safe" holding account</div></div>
+            <div class="rule-row"><div class="dot-r"></div><div>Caller ID showing "TD" is <strong>not</strong> proof — numbers can be spoofed</div></div>
+            <div class="rule-row"><div class="dot-r"></div><div>The more pressure to act fast, the more suspicious you should be</div></div>
+          </div>
+          <button class="next-btn" onclick="restartDrill()">Restart drill</button>
+          <button class="back-btn" onclick="closeDrill()">← Back to dashboard</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+var answers=[null,null,null,null];
+var correct=[2,1,1,1];
+var wrongFb=[
+  ["Real TD staff will never ask for your password — not even in an emergency.",
+   "Checking the app is smart instinct, but the right move is to hang up entirely and call TD yourself."],
+  ["Partial credentials are still credentials to a scammer.",
+   "Your account number combined with caller ID spoofing is enough to cause harm. End the call."],
+  ["Sharing the OTP instantly completes the account takeover.",
+   "Conditional sharing is still sharing — and it keeps you engaged on the call."],
+  ["Professionalism is cheap to fake. The 'safe account' request is the biggest red flag in banking fraud.",
+   "Any account number they give belongs to a mule account. Engaging further costs you money."]
+];
+var rightFb=[
+  "Exactly right. Hanging up and calling back on the number on your card is the only safe path.",
+  "Correct. Urgency is the scammer's primary weapon — recognising it in real time breaks the spell.",
+  "Perfect. The OTP text itself told you not to share it with anyone, including TD staff.",
+  "Right. Banks never ask you to move money for protection. Full stop."
+];
+function pick(step,idx,isRight){
+  if(answers[step]!==null)return;
+  answers[step]=idx;
+  var btn=document.getElementById('d'+step+'c'+idx);
+  var fb=document.getElementById('d'+step+'fb');
+  var nx=document.getElementById('d'+step+'nx');
+  btn.classList.add(isRight?'good':'bad');
+  btn.disabled=true;
+  [0,1,2].forEach(function(i){var b=document.getElementById('d'+step+'c'+i);if(b&&i!==idx)b.disabled=true;});
+  if(isRight){
+    fb.innerHTML='<div class="fb good">'+rightFb[step]+'</div>';
+    nx.style.display='block';
+  } else {
+    var wc=document.querySelectorAll('#d'+step+' .ch.bad').length;
+    fb.innerHTML='<div class="fb bad">'+wrongFb[step][Math.min(wc-1,wrongFb[step].length-1)]+'</div>';
+  }
+}
+function goStep(n){
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on')});
+  document.getElementById('d'+n).classList.add('on');
+  if(n===4)showResults();
+}
+function showResults(){
+  var m=answers.filter(function(a,i){return a!==null&&a!==correct[i];}).length;
+  var score=Math.max(100-m*18,46);
+  document.getElementById('dscore').textContent=score+'/100';
+  var L=['Perfect run','Strong performance','Good — review the misses','Keep practising'];
+  var S=['You caught every tactic including the safe-account endgame.',
+    'You resisted the hardest moves. One slip to review.',
+    'Two tactics caught you — those are real-world vulnerabilities.',
+    'This is exactly why drills matter. Each run builds resistance.'];
+  var i=m===0?0:m===1?1:m===2?2:3;
+  document.getElementById('dlabel').textContent=L[i];
+  document.getElementById('dsub').textContent=S[i];
+}
+function openDrill(){
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('drill').classList.add('on');
+}
+function closeDrill(){
+  document.getElementById('drill').classList.remove('on');
+  document.getElementById('dashboard').style.display='block';
+  restartDrill(true);
+}
+function restartDrill(silent){
+  answers=[null,null,null,null];
+  for(var s=0;s<4;s++){
+    [0,1,2].forEach(function(i){var b=document.getElementById('d'+s+'c'+i);if(b){b.classList.remove('bad','good');b.disabled=false;}});
+    var fb=document.getElementById('d'+s+'fb');if(fb)fb.innerHTML='';
+    var nx=document.getElementById('d'+s+'nx');if(nx)nx.style.display='none';
+  }
+  if(!silent){document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on')});document.getElementById('d0').classList.add('on');}
+}
+</script>
+</body>
+</html>
