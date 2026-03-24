@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TD Fraud Protection — Reimagined</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e14;
+    --surface: #111720;
+    --border: #1e2a38;
+    --green: #00c875;
+    --green-dim: #00c87520;
+    --green-glow: #00c87540;
+    --amber: #f5a623;
+    --red: #ff4d6a;
+    --blue: #4da6ff;
+    --text: #e8edf5;
+    --muted: #6b7e96;
+    --dimmer: #3a4a5c;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid background ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Glow blob ── */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 500px;
+    background: radial-gradient(ellipse, #00c87515 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; padding: 0 28px; position: relative; z-index: 1; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #0a0e14cc;
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--green);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .nav-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── HERO ── */
+  header {
+    padding: 160px 0 80px;
+    text-align: left;
+  }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 32px; height: 1px;
+    background: var(--green);
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.4rem, 6vw, 3.8rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--green);
+  }
+
+  .hero-sub {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 40px;
+    line-height: 1.7;
+  }
+
+  /* ── STAT ROW ── */
+  .stats {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 72px;
+    background: var(--surface);
+  }
+
+  .stat {
+    flex: 1;
+    padding: 22px 28px;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .stat:last-child { border-right: none; }
+
+  .stat-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--text);
+    display: block;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-number span { color: var(--green); }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── ARCHITECTURE ── */
+  .arch-section { margin-bottom: 72px; }
+
+  .arch-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .arch-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .arch-card:hover {
+    border-color: var(--green);
+    transform: translateY(-3px);
+  }
+  .arch-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .arch-card.before::before { background: var(--blue); }
+  .arch-card.during::before { background: var(--amber); }
+  .arch-card.after::before  { background: var(--green); }
+
+  .arch-stage {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+  }
+  .arch-card.before .arch-stage { color: var(--blue); }
+  .arch-card.during .arch-stage { color: var(--amber); }
+  .arch-card.after  .arch-stage { color: var(--green); }
+
+  .arch-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.25;
+  }
+
+  .arch-desc {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── PROTOTYPE CARDS ── */
+  .demos-section { margin-bottom: 72px; }
+
+  .demo-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .demo-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--green-dim);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .demo-card:hover {
+    border-color: var(--green);
+    transform: translateX(4px);
+  }
+  .demo-card:hover::before { opacity: 1; }
+
+  .demo-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .demo-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+  .tag-before { background: #4da6ff15; color: var(--blue); border: 1px solid #4da6ff30; }
+  .tag-during { background: #f5a62315; color: var(--amber); border: 1px solid #f5a62330; }
+  .tag-after  { background: #00c87515; color: var(--green); border: 1px solid #00c87530; }
+
+  .demo-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--dimmer);
+  }
+
+  .demo-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .demo-desc {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .demo-arrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    color: var(--green);
+    opacity: 0.5;
+    transition: opacity 0.2s, transform 0.2s;
+    flex-shrink: 0;
+  }
+  .demo-card:hover .demo-arrow {
+    opacity: 1;
+    transform: translateX(4px);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 36px 0 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .footer-left {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .footer-left a {
+    color: var(--green);
+    text-decoration: none;
+  }
+  .footer-left a:hover { text-decoration: underline; }
+
+  .footer-right {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--dimmer);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.6s ease forwards; opacity: 0; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.5s; }
+  .delay-6 { animation-delay: 0.6s; }
+
+  /* ── MOBILE ── */
+  @media (max-width: 640px) {
+    .arch-cards { grid-template-columns: 1fr; }
+    .stats { flex-direction: column; }
+    .stat { border-right: none; border-bottom: 1px solid var(--border); }
+    .stat:last-child { border-bottom: none; }
+    .demo-card { grid-template-columns: 1fr; }
+    .demo-arrow { display: none; }
+    footer { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">// team sunday</span>
+  <span class="nav-badge">UTM DASH 2026 · Runner-Up</span>
+</nav>
+
+<main class="container">
+
+  <header>
+    <div class="eyebrow fade-up">TD Bank · FinTech Case Competition</div>
+    <h1 class="fade-up delay-1">Fraud Protection<br><em>Reimagined</em></h1>
+    <p class="hero-sub fade-up delay-2">
+      A three-stage human resilience system — built and prototyped live in 90 minutes.
+      Addressing social engineering threats projected to drive $40B in losses by 2027.
+    </p>
+
+    <div class="stats fade-up delay-3">
+      <div class="stat">
+        <span class="stat-number"><span>$40</span>B</span>
+        <span class="stat-label">AI-driven losses by 2027</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number"><span>90</span>%</span>
+        <span class="stat-label">Fraud via social engineering</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number"><span>18</span></span>
+        <span class="stat-label">Competing teams</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number"><span>4</span></span>
+        <span class="stat-label">Live prototypes</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Architecture -->
+  <section class="arch-section fade-up delay-4">
+    <div class="section-label">Framework</div>
+    <div class="arch-cards">
+      <div class="arch-card before">
+        <div class="arch-stage">01 · Before</div>
+        <div class="arch-title">Educate &amp; Inoculate</div>
+        <div class="arch-desc">Pre-exposure to scam patterns builds cognitive "antibodies" before attackers make contact.</div>
+      </div>
+      <div class="arch-card during">
+        <div class="arch-stage">02 · During</div>
+        <div class="arch-title">Interrupt &amp; Protect</div>
+        <div class="arch-desc">Intentional friction and biometric signals break urgency manipulation at the moment money moves.</div>
+      </div>
+      <div class="arch-card after">
+        <div class="arch-stage">03 · After</div>
+        <div class="arch-title">Recover &amp; Rebuild</div>
+        <div class="arch-desc">Shame-free disclosure, a named case manager, and an AI companion turn recovery into a product.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Demos -->
+  <section class="demos-section">
+    <div class="section-label fade-up">Live Prototypes</div>
+
+    <a class="demo-card fade-up delay-1" href="https://ygupta49.github.io/fintech-case-comp/td_fraud_iq_dashboard.html" target="_blank">
+      <div>
+        <div class="demo-meta">
+          <span class="demo-tag tag-before">Before</span>
+          <span class="demo-number">01</span>
+        </div>
+        <div class="demo-name">TD Fraud IQ Dashboard</div>
+        <div class="demo-desc">Personalized 0–100 vulnerability score, adaptive drill system, and life-stage trigger content.</div>
+      </div>
+      <div class="demo-arrow">→</div>
+    </a>
+
+    <a class="demo-card fade-up delay-2" href="https://ygupta49.github.io/fintech-case-comp/td_friction_engine_etransfer.html" target="_blank">
+      <div>
+        <div class="demo-meta">
+          <span class="demo-tag tag-during">During</span>
+          <span class="demo-number">02</span>
+        </div>
+        <div class="demo-name">TD Friction Engine</div>
+        <div class="demo-desc">Graduated friction tiers that queue — not block — transfers, destroying manufactured urgency.</div>
+      </div>
+      <div class="demo-arrow">→</div>
+    </a>
+
+    <a class="demo-card fade-up delay-3" href="https://ygupta49.github.io/fintech-case-comp/td_friction_engine_biometric.html" target="_blank">
+      <div>
+        <div class="demo-meta">
+          <span class="demo-tag tag-during">During</span>
+          <span class="demo-number">03</span>
+        </div>
+        <div class="demo-name">Friction Engine + Biometric Layer</div>
+        <div class="demo-desc">Apple Watch, Fitbit &amp; Garmin heart-rate fusion detects coercion no transaction model can catch.</div>
+      </div>
+      <div class="demo-arrow">→</div>
+    </a>
+
+    <a class="demo-card fade-up delay-4" href="https://ygupta49.github.io/fintech-case-comp/td_fraud_recovery_ai_companion.html" target="_blank">
+      <div>
+        <div class="demo-meta">
+          <span class="demo-tag tag-after">After</span>
+          <span class="demo-number">04</span>
+        </div>
+        <div class="demo-name">Trauma-Informed Care + Ava</div>
+        <div class="demo-desc">Specialist routing, shame-free disclosure, and an AI companion that checks in daily post-fraud.</div>
+      </div>
+      <div class="demo-arrow">→</div>
+    </a>
+
+  </section>
+
+</main>
+
+<footer class="container">
+  <div class="footer-left">
+    Team Sunday · Vera Allue &amp; Yashda Gupta<br>
+    <a href="https://www.linkedin.com/in/yashda-gupta/" target="_blank">linkedin.com/in/yashda-gupta</a>
+  </div>
+  <div class="footer-right">UTM FinTech Association · Mar 2026</div>
+</footer>
+
+</body>
+</html>
